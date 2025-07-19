@@ -9,16 +9,16 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 //   });
 // });
 const registerUser = asyncHandler(async (req, res) => {
-  const { fullname, email, username, password } = req.body;
+  const { fullName, email, username, password } = req.body;
   console.log("email", email);
 
   if (
-    [fullname, email, username, password].some((field) => field?.trim() === "") //check the all field if any one is empty then it will fire error
+    [fullName, email, username, password].some((field) => field?.trim() === "") //check the all field if any one is empty then it will fire error
   ) {
     throw new ApiErrors(400, "All field are required");
   }
 
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     //this is used to find out the if you are using same email or username again
     $or: [{ username }, { email }],
   });
@@ -28,9 +28,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //checking for avatar and coverImage
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.avatar[0]?.path;
+  // const coverImageLocalPath = req.files?.avatar[0]?.path;     this is okay actually but we get the error later you can read null value so you need to add classic if else bcz avatar is checked it is not checked
   if (!avatarLocalPath) {
     throw new ApiErrors(400, "avatar ifle is required");
+  }
+
+  //for coverImage
+  let coverImageLocalPath; // so you add this if coverImage is emtpy it will not give you error
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath); //is used for uploading the image on cloudinary
@@ -43,7 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //now you are inserting it in DB
   const user = await User.create({
-    fullname,
+    fullName,
     avatar: avatar.url,
     coverImage: coverImage?.url || "", //basically you have not added validation for the coverImage if suppose it may not uploaded to cloudinary you may get error so add blank if nnot there
     email,
