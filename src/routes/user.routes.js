@@ -10,8 +10,14 @@
 // //localhost:8000//users/register        //url get appended more here   now if use register delete no need to append url always it get by default
 // export default router;
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import {
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js"; //is  helpfull for adding extra functionalities
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -29,5 +35,11 @@ router.route("/register").post(
   ]),
   registerUser
 );
+
+router.route("/login").post(loginUser);
+
+router.route("/logout").post(verifyJWT, logoutUser); //by the middleware verifyJWT you dont need to check the all things again
+
+router.route("/refresh-token").post(refreshAccessToken);
 
 export default router;
